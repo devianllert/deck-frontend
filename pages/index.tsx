@@ -130,7 +130,7 @@ const Home: NextPage<{ userID: string }> = (props) => {
   );
 };
 
-export const getServerSideProps = async (ctx) => {
+export const getStaticProps = async (ctx) => {
   const queryCache = new QueryCache();
 
   const userID = getCookie(ctx.req.headers.cookie, "userId");
