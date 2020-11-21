@@ -1,105 +1,151 @@
-import { useState } from 'react';
-import { NextPage } from 'next';
-import styled from 'styled-components';
+import { useEffect, useState } from "react";
+import { NextPage } from "next";
+import { QueryCache, useQuery } from "react-query";
+import { dehydrate } from "react-query/hydration";
 
-import Container from '@material-ui/core/Container';
-import Typography from '@material-ui/core/Typography';
-import Box from '@material-ui/core/Box';
-import Paper from '@material-ui/core/Paper';
+import Container from "@material-ui/core/Container";
+import Typography from "@material-ui/core/Typography";
+import Box from "@material-ui/core/Box";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Switch from "@material-ui/core/Switch";
+import IconButton from "@material-ui/core/IconButton";
+import ExitToApp from "@material-ui/icons/ExitToApp";
 
-import { parseMD } from '../utils/parseMD';
-import { fetchAllCards, Card } from '../services/cards.service';
+import Input from "../components/Input";
+import CardListItem from "../components/CardListItem";
 
-import Search from '../components/Search';
+import { fetchAllCards, Card, fetchUserCards } from "../services/cards.service";
+import { login, logout } from "../services/users.service";
+import { getCookie } from "../utils/cookie";
 
-interface CardItemProps {
-  drops: boolean;
-  rarity: number;
-}
+const Home: NextPage<{ userID: string }> = (props) => {
+  const { userID } = props;
 
-const rarityColors = ['#78909C', '#66BB6A', '#42A5F5', '#AB47BC', '#FFA726'];
+  const { data: allCards } = useQuery("cards-all", fetchAllCards);
+  const { data: myCards } = useQuery(["cards-my", userID], () => fetchUserCards(userID), {
+    enabled: !!userID,
+  });
 
-const CardItem = styled(Box)<CardItemProps>`
-  position: relative;
+  const [isAuth, setAuth] = useState(!!userID)
+  const [searchCardsInput, setSearchCardsInput] = useState("");
+  const [searchCards, setSearchCards] = useState(userID ? myCards : allCards);
+  const [userIdInput, setUserIdInput] = useState(userID);
+  const [isMy, setIsMy] = useState(!!userID);
 
-  opacity: ${({ drops }) => drops ? 1 : 0.5};
-  cursor: ${({ drops }) => drops ? 'default' : 'not-allowed'};
+  const filterCards = (): void => {
+    const currentCards = isMy ? myCards : allCards;
 
-  overflow: hidden;
-
-  &:before {
-    content: '';
-
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-
-    height: 100%;
-    width: 4px;
-
-    background-color: ${({ rarity }) => rarityColors[rarity]};
-  }
-`;
-
-const Home: NextPage<{ cards: Card[]; }> = ({ cards }) => {
-  const [searchCards, setSearchCards] = useState(cards);
-
-  const filterCards = (event): void => {
-    const filteredCards = cards.filter((card) => {
+    const filteredCards = currentCards.filter((card) => {
       const lowercasedTitle = card.title.toLowerCase();
 
-      return lowercasedTitle.includes(event.target.value.toLowerCase())
+      return lowercasedTitle.includes(searchCardsInput);
     });
 
     setSearchCards(filteredCards);
+  };
+
+  const handleSubmit = () => {
+    login(userIdInput);
+
+    fetchUserCards(userIdInput);
+  };
+
+  const handleChange = async () => {
+    const nextState = !isMy;
+
+    setIsMy(nextState);
+
+    setSearchCards(nextState ? myCards : allCards);
+  };
+
+  const handleLogout = () => {
+    setAuth(false);
+
+    logout();
   }
+
+  useEffect(() => {
+    filterCards();
+  }, [searchCardsInput, isMy]);
 
   return (
     <Container maxWidth="md">
-    <Box my={4} borderBottom="1px solid gray">
-      <Typography variant="h1">
-        Deck
-      </Typography>
-    </Box>
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="space-between"
+        borderBottom="1px solid gray"
+      >
+        <Typography variant="h1">Deck</Typography>
 
-    <Box mb={2}>
-      <Search onSearch={filterCards} />
-    </Box>
+        {isAuth && (
+          <Box display="flex" alignItems="center">
+            <Typography component="span" variant="h6">
+              {userID.slice(-4)}
+            </Typography>
 
-    <Box>
-      {searchCards.map((card: Card) => (
-        <CardItem
-          key={card.id}
-          drops={card.drops}
-          rarity={card.rarity}
-          component={Paper}
-          display="flex"
-          flexDirection="column"
-          alignItems="flex-start"
-          minHeight={64}
-          mb={2}
-          p={2}
-        >
-          <Typography variant="subtitle1">
-            {card.title}
-          </Typography>
+            <IconButton aria-label="logout" onClick={handleLogout}>
+              <ExitToApp />
+            </IconButton>
+          </Box>
+        )}
+      </Box>
 
-          <Typography variant="body2">
-            {parseMD(card.description)}
-          </Typography>
-        </CardItem>
-      ))}
-    </Box>
-  </Container>
+      <Box my={2}>
+        {!isAuth && (
+          <Input
+            placeholder="Введите свой ID"
+            inputProps={{ "aria-label": "card name" }}
+            onSubmit={handleSubmit}
+            onChange={(event) => setUserIdInput(event.target.value)}
+          />
+        )}
+
+        <Box display="flex" alignItems="center" flexWrap="wrap-reverse" my={2}>
+          <Input
+            placeholder="Поиск по карточкам"
+            inputProps={{ "aria-label": "card name" }}
+            onChange={(event) =>
+              setSearchCardsInput(event.target.value.toLowerCase())
+            }
+          />
+
+          {isAuth && (
+            <Box ml="auto">
+              <FormControlLabel
+                control={<Switch checked={isMy} onChange={handleChange} />}
+                label={isMy ? "Мои" : "Все"}
+              />
+            </Box>
+          )}
+        </Box>
+      </Box>
+
+      <Box>
+        {searchCards.map((card: Card) => (
+          <CardListItem key={card.id} card={card} my={isMy} />
+        ))}
+      </Box>
+    </Container>
   );
 };
 
-Home.getInitialProps = async () => {
-  const cards = await fetchAllCards();
+export const getServerSideProps = async (ctx) => {
+  const queryCache = new QueryCache();
 
-  return {    
-    cards,
+  const userID = getCookie(ctx.req.headers.cookie, "userId");
+
+  await queryCache.prefetchQuery("cards-all", fetchAllCards);
+
+  if (userID) {
+    await queryCache.prefetchQuery(["cards-my", userID], () => fetchUserCards(userID));
+  }
+
+  return {
+    props: {
+      dehydratedState: dehydrate(queryCache),
+      userID,
+    },
   };
 };
 

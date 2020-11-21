@@ -8,8 +8,10 @@ export const InputBox = styled(Paper)`
   padding: 2px 4px;
   display: flex;
   align-items: center;
-  max-width: 400px;
-  width: 100%;
+
+  @media screen and (max-width: 960px) {
+    width: 100%;
+  }
 `;
 
 export const InputSearch = styled(InputBase)`
