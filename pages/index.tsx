@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NextPage } from "next";
+import { GetStaticProps, NextPage } from "next";
 import { QueryCache, useQuery } from "react-query";
 import { dehydrate } from "react-query/hydration";
 
@@ -130,7 +130,7 @@ const Home: NextPage<{ userID: string }> = (props) => {
   );
 };
 
-export const getStaticProps = async (ctx) => {
+Home.getInitialProps = async (ctx) => {
   const queryCache = new QueryCache();
 
   const userID = getCookie(ctx.req.headers.cookie, "userId");
@@ -142,10 +142,8 @@ export const getStaticProps = async (ctx) => {
   }
 
   return {
-    props: {
-      dehydratedState: dehydrate(queryCache),
-      userID,
-    },
+    dehydratedState: dehydrate(queryCache),
+    userID,
   };
 };
 
