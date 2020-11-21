@@ -1,5 +1,5 @@
+import { useState } from 'react';
 import { NextPage } from 'next';
-import axios from 'axios';
 import styled from 'styled-components';
 
 import Container from '@material-ui/core/Container';
@@ -8,14 +8,9 @@ import Box from '@material-ui/core/Box';
 import Paper from '@material-ui/core/Paper';
 
 import { parseMD } from '../utils/parseMD';
+import { fetchAllCards, Card } from '../services/cards.service';
 
-interface Card {
-  id: number;
-  title: string;
-  description: string;
-  rarity: number;
-  drops: boolean;
-}
+import Search from '../components/Search';
 
 interface CardItemProps {
   drops: boolean;
@@ -48,6 +43,18 @@ const CardItem = styled(Box)<CardItemProps>`
 `;
 
 const Home: NextPage<{ cards: Card[]; }> = ({ cards }) => {
+  const [searchCards, setSearchCards] = useState(cards);
+
+  const filterCards = (event): void => {
+    const filteredCards = cards.filter((card) => {
+      const lowercasedTitle = card.title.toLowerCase();
+
+      return lowercasedTitle.includes(event.target.value.toLowerCase())
+    });
+
+    setSearchCards(filteredCards);
+  }
+
   return (
     <Container maxWidth="md">
     <Box my={4} borderBottom="1px solid gray">
@@ -56,8 +63,12 @@ const Home: NextPage<{ cards: Card[]; }> = ({ cards }) => {
       </Typography>
     </Box>
 
+    <Box mb={2}>
+      <Search onSearch={filterCards} />
+    </Box>
+
     <Box>
-      {cards.map((card) => (
+      {searchCards.map((card: Card) => (
         <CardItem
           key={card.id}
           drops={card.drops}
@@ -85,12 +96,10 @@ const Home: NextPage<{ cards: Card[]; }> = ({ cards }) => {
 };
 
 Home.getInitialProps = async () => {
-  const { data } = await axios.get<Card[]>('http://176.119.157.171:3000/cards');
-
-  const sortedCards = data.sort((a, b) => a.rarity > b.rarity ? 1 : -1);
+  const cards = await fetchAllCards();
 
   return {    
-    cards: sortedCards,
+    cards,
   };
 };
 

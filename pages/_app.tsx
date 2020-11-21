@@ -4,6 +4,7 @@ import { ThemeProvider } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 
 import { darkTheme } from '../design/theme';
+import { GlobalStyles } from '../design/globalStyles';
 
 export default function MyApp(props) {
   const { Component, pageProps } = props;
@@ -27,6 +28,7 @@ export default function MyApp(props) {
 
       <ThemeProvider theme={darkTheme}>
         <CssBaseline />
+        <GlobalStyles />
 
         <Component {...pageProps} />
       </ThemeProvider>
