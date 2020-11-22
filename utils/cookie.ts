@@ -1,4 +1,4 @@
-export const getCookie = (cookie: string, name: string): string => {
+export const getCookie = (cookie: string = '', name: string): string => {
   let matches = cookie.match(
     new RegExp(
       "(?:^|; )" +
