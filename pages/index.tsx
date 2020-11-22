@@ -136,10 +136,7 @@ Home.getInitialProps = async (ctx) => {
   const userID = getCookie(ctx.req.headers.cookie, "userId");
 
   await queryCache.prefetchQuery("cards-all", fetchAllCards);
-
-  if (userID) {
-    await queryCache.prefetchQuery(["cards-my", userID], () => fetchUserCards(userID));
-  }
+  await queryCache.prefetchQuery(["cards-my", userID], () => fetchUserCards(userID));
 
   return {
     dehydratedState: dehydrate(queryCache),
