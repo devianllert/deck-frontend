@@ -7,13 +7,21 @@ import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
 
 interface ConfirmModalProps {
+  title: string;
+  description: string;
   open: boolean;
   onClose?: () => void;
   onAgree?: () => void;
 }
 
 const ConfirmModal = (props: ConfirmModalProps) => {
-  const { open = false, onClose, onAgree } = props;
+  const {
+    title,
+    description,
+    open = false,
+    onClose,
+    onAgree,
+  } = props;
 
   return (
     <Dialog
@@ -22,12 +30,11 @@ const ConfirmModal = (props: ConfirmModalProps) => {
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
     >
-      <DialogTitle id="alert-dialog-title">Вытянуть карточку?</DialogTitle>
+      <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
 
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
-          После этого действия мы покажем ту карточку, которую вы вытянули и
-          добавим её в ваш инвентарь.
+          {description}
         </DialogContentText>
       </DialogContent>
 

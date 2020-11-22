@@ -1,7 +1,6 @@
-import { useEffect, useState, FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { GetServerSideProps, NextPage } from "next";
-import { QueryCache, useMutation, useQuery, useQueryCache } from "react-query";
-import { dehydrate } from "react-query/hydration";
+import { useMutation, useQuery } from "react-query";
 
 import Container from "@material-ui/core/Container";
 import Typography from "@material-ui/core/Typography";
@@ -29,8 +28,11 @@ import { getCookie } from "../utils/cookie";
 const Home: NextPage<{ userID: string }> = (props) => {
   const { userID } = props;
 
-  const { data: allCards } = useQuery("cards-all", fetchAllCards);
-  const { data: myCards, refetch } = useQuery(
+  const { data: allCards = [], isLoading: allCardsLoading } = useQuery(
+    "cards-all",
+    fetchAllCards
+  );
+  const { data: myCards = [], refetch, isLoading: myCardsLoading } = useQuery(
     "cards-my",
     () => fetchUserCards(userID),
     {
@@ -55,6 +57,10 @@ const Home: NextPage<{ userID: string }> = (props) => {
   const [isMy, setIsMy] = useState(!!userID);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [openCardModal, setOpenCardModal] = useState(false);
+
+  useEffect(() => {
+    setSearchCards(userID ? myCards : allCards);
+  }, [myCards, allCards]);
 
   const filterCards = (): void => {
     const currentCards = isMy ? myCards : allCards;
@@ -97,6 +103,8 @@ const Home: NextPage<{ userID: string }> = (props) => {
   useEffect(() => {
     filterCards();
   }, [searchCardsInput, isMy]);
+
+  if (allCardsLoading || myCardsLoading) return null;
 
   return (
     <Container maxWidth="md">
@@ -203,6 +211,8 @@ const Home: NextPage<{ userID: string }> = (props) => {
       </Box>
 
       <ConfirmModal
+        title="Вытянуть карточку?"
+        description="После этого действия мы покажем ту карточку, которую вы вытянули и добавим её в ваш инвентарь"
         open={openConfirmModal}
         onAgree={handleDraw}
         onClose={() => setOpenConfirmModal(false)}
@@ -218,19 +228,12 @@ const Home: NextPage<{ userID: string }> = (props) => {
 };
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const queryCache = new QueryCache();
-
   const userID = getCookie(ctx.req.headers.cookie, "userId");
 
-  await queryCache.prefetchQuery("cards-all", fetchAllCards);
-
-  if (userID) {
-    await queryCache.prefetchQuery("cards-my", () => fetchUserCards(userID));
-  }
+  // TODO: Prefetch cards with react-query
 
   return {
     props: {
-      dehydratedState: dehydrate(queryCache),
       userID,
     },
   };
