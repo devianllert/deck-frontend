@@ -60,6 +60,7 @@ const Home: NextPage<{ userID: string }> = (props) => {
 
   const handleLogout = () => {
     setAuth(false);
+    setIsMy(false);
 
     logout();
   }
