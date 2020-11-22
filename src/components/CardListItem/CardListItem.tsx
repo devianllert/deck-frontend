@@ -9,13 +9,13 @@ import * as S from "./styled";
 
 interface CardListItemProps {
   card: Card;
-  my: boolean;
+  onUse?: (card: Card) => void;
 }
 
-const CardListItem = ({ card, my }: CardListItemProps) => {
+const CardListItem = ({ card, onUse }: CardListItemProps) => {
   return (
     <S.CardWrapper
-      drops={my ? true : card.drops}
+      drops={card.count ? true : card.drops}
       rarity={card.rarity}
       component={Paper}
       display="flex"

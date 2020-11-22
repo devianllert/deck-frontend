@@ -1,4 +1,4 @@
-import { ChangeEvent } from "react";
+import { ChangeEvent, FormEvent } from "react";
 
 import SearchIcon from "@material-ui/icons/Search";
 import { InputBaseProps } from "@material-ui/core";
@@ -7,7 +7,7 @@ import * as S from "./styled";
 
 interface InputProps extends InputBaseProps {
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
-  onSubmit?: () => void;
+  onSubmit?: (event: FormEvent<HTMLDivElement>) => void;
 }
 
 const Input = (props: InputProps) => {
