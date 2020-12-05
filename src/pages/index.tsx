@@ -22,12 +22,13 @@ import {
   Card,
   fetchUserCards,
   drawCard,
+  useCard,
 } from "../services/cards.service";
 import { login, logout } from "../services/users.service";
 import { getCookie } from "../utils/cookie";
 
-const Home: NextPage<{ userID: string }> = (props) => {
-  const { userID } = props;
+const Home: NextPage<{ userId: string }> = (props) => {
+  const { userId } = props;
 
   const { data: allCards = [], isLoading: allCardsLoading } = useQuery(
     "cards-all",
@@ -35,9 +36,9 @@ const Home: NextPage<{ userID: string }> = (props) => {
   );
   const { data: myCards = [], refetch, isLoading: myCardsLoading } = useQuery(
     "cards-my",
-    () => fetchUserCards(userID),
+    () => fetchUserCards(userId),
     {
-      enabled: !!userID,
+      enabled: !!userId,
     }
   );
 
@@ -51,11 +52,21 @@ const Home: NextPage<{ userID: string }> = (props) => {
     },
   });
 
-  const [isAuth, setAuth] = useState(!!userID);
+  const [mutateUse] = useMutation(useCard, {
+    onSettled: async () => {
+      const cards = await refetch();
+
+      if (isMy) {
+        setSearchCards(cards);
+      }
+    },
+  });
+
+  const [isAuth, setAuth] = useState(!!userId);
   const [searchCardsInput, setSearchCardsInput] = useState("");
-  const [searchCards, setSearchCards] = useState(userID ? myCards : allCards);
-  const [userIdInput, setUserIdInput] = useState(userID);
-  const [isMy, setIsMy] = useState(!!userID);
+  const [searchCards, setSearchCards] = useState(userId ? myCards : allCards);
+  const [userIdInput, setUserIdInput] = useState(userId);
+  const [isMy, setIsMy] = useState(!!userId);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [openCardModal, setOpenCardModal] = useState(false);
 
@@ -84,11 +95,13 @@ const Home: NextPage<{ userID: string }> = (props) => {
   const handleDraw = async () => {
     if (isLoading) return;
 
-    await mutateDraw(userID);
+    await mutateDraw(userId);
 
     setOpenConfirmModal(false);
     setOpenCardModal(true);
   };
+
+  const handleUse = (cardId: string) => mutateUse({ userId, cardId });
 
   const handleLogout = () => {
     setAuth(false);
@@ -114,7 +127,7 @@ const Home: NextPage<{ userID: string }> = (props) => {
         {isAuth && (
           <Box display="flex" alignItems="center">
             <Typography component="span" variant="h6">
-              {userID.slice(-4)}
+              {userId.slice(-4)}
             </Typography>
 
             <IconButton aria-label="logout" onClick={handleLogout}>
@@ -171,7 +184,7 @@ const Home: NextPage<{ userID: string }> = (props) => {
 
       <Box>
         {searchCards.map((card: Card) => (
-          <CardListItem key={card.id} card={card} />
+          <CardListItem key={card.id} card={card} onUse={handleUse} />
         ))}
 
         {searchCards.length <= 0 && searchCardsInput && (
@@ -225,18 +238,18 @@ const Home: NextPage<{ userID: string }> = (props) => {
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const queryCache = new QueryCache();
 
-  const userID = getCookie(ctx.req.headers.cookie, "userId");
+  const userId = getCookie(ctx.req.headers.cookie, "userId");
 
   await queryCache.prefetchQuery("cards-all", fetchAllCards);
 
-  if (userID) {
-    await queryCache.prefetchQuery("cards-my", () => fetchUserCards(userID));
+  if (userId) {
+    await queryCache.prefetchQuery("cards-my", () => fetchUserCards(userId));
   }
 
   return {
     props: {
       dehydratedState: dehydrate(queryCache),
-      userID,
+      userId,
     },
   };
 };

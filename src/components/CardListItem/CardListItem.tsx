@@ -9,24 +9,35 @@ import { parseMD } from "../../utils/parseMD";
 import ConfirmModal from "../ConfirmModal/ConfirmModal";
 
 import * as S from "./styled";
+import { Box, Button } from "@material-ui/core";
 
 interface CardListItemProps {
   card: Card;
-  onUse?: (card: Card) => void;
+  onUse?: (cardId: string) => Promise<void>;
 }
 
 const CardListItem = ({ card, onUse }: CardListItemProps) => {
   const [open, setOpen] = useState(false);
 
+  const hasCard = card.count > 0;
+
+  const handleUse = async () => {
+    setOpen(false);
+
+    await onUse(card.id.toString());
+  };
+
   return (
     <>
-      <ConfirmModal
-        title={`Использовать ${card.title}?`}
-        description={card.description}
-        open={open}
-        onAgree={() => onUse(card)}
-        onClose={() => setOpen(true)}
-      />
+      {hasCard && (
+        <ConfirmModal
+          title={`Use ${card.title}?`}
+          description={card.description}
+          open={open}
+          onAgree={handleUse}
+          onClose={() => setOpen(false)}
+        />
+      )}
 
       <S.CardWrapper
         $drops={card.count ? true : card.drops}
@@ -39,9 +50,27 @@ const CardListItem = ({ card, onUse }: CardListItemProps) => {
         mb={2}
         p={2}
       >
-        <Typography variant="subtitle1">
-          {card.count ? `${card.count}x ${card.title}` : card.title}
-        </Typography>
+        <Box
+          width="100%"
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <Typography variant="subtitle1">
+            {card.count ? `${card.count}x ${card.title}` : card.title}
+          </Typography>
+
+          {hasCard && (
+            <Button
+              variant="contained"
+              size="small"
+              color="secondary"
+              onClick={() => setOpen(true)}
+            >
+              Use
+            </Button>
+          )}
+        </Box>
 
         <Typography variant="body2">{parseMD(card.description)}</Typography>
       </S.CardWrapper>

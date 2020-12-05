@@ -31,7 +31,7 @@ export const drawCard = async (userId: string): Promise<Card> => {
   return data;
 };
 
-export const useCard = async (userId: string, cardId: string): Promise<void> => {
+export const useCard = async ({ userId, cardId }: { userId: string; cardId: string }): Promise<void> => {
   const { data } = await api.get(`/use/${userId}/${cardId}`);
 
   return data;
