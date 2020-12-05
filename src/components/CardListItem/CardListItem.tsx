@@ -29,7 +29,7 @@ const CardListItem = ({ card, onUse }: CardListItemProps) => {
       />
 
       <S.CardWrapper
-        drops={card.count ? true : card.drops}
+        $drops={card.count ? true : card.drops}
         rarity={card.rarity}
         component={Paper}
         display="flex"

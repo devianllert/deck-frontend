@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import Head from "next/head";
-import { ThemeProvider } from "@material-ui/core/styles";
+import { StylesProvider, ThemeProvider } from "@material-ui/core/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import { QueryCache, ReactQueryCacheProvider } from "react-query";
 import { Hydrate } from 'react-query/hydration'
@@ -35,13 +35,14 @@ export default function MyApp(props) {
 
       <ReactQueryCacheProvider queryCache={queryCache}>
         <Hydrate state={pageProps.dehydratedState}>
-          <ThemeProvider theme={darkTheme}>
-            <CssBaseline />
-            <GlobalStyles />
+          <StylesProvider injectFirst>
+            <ThemeProvider theme={darkTheme}>
+              <CssBaseline />
+              <GlobalStyles />
 
-            <Component {...pageProps} />
-          </ThemeProvider>
-
+              <Component {...pageProps} />
+            </ThemeProvider>
+          </StylesProvider>
         </Hydrate>
       </ReactQueryCacheProvider>
     </>

@@ -10,25 +10,29 @@ export interface Card {
 }
 
 export const fetchAllCards = async (): Promise<Card[]> => {
-  const { data } = await api.get<Card[]>('/api/cards');
+  const { data } = await api.get<Card[]>('/cards');
 
-  return data;
+  const sortedCards = data.sort((a, b) => a.rarity - b.rarity);
+
+  return sortedCards;
 };
 
 export const fetchUserCards = async (userId: string): Promise<Card[]> => {
-  const { data } = await api.get<Card[]>(`/api/inventory/${userId}`);
+  const { data } = await api.get<Card[]>(`/inventory/${userId}`);
 
-  return data;
+  const sortedCards = data.sort((a, b) => a.rarity - b.rarity);
+
+  return sortedCards;
 };
 
 export const drawCard = async (userId: string): Promise<Card> => {
-  const { data } = await api.get<Card>(`/api/draw/${userId}`);
+  const { data } = await api.get<Card>(`/draw/${userId}`);
 
   return data;
 };
 
 export const useCard = async (userId: string, cardId: string): Promise<void> => {
-  const { data } = await api.get(`/api/use/${userId}/${cardId}`);
+  const { data } = await api.get(`/use/${userId}/${cardId}`);
 
   return data;
 };

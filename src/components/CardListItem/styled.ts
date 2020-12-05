@@ -3,7 +3,7 @@ import Box from "@material-ui/core/Box";
 import styled from "styled-components";
 
 interface CardWrapperProps {
-  drops: boolean;
+  $drops: boolean;
   rarity: number;
 }
 
@@ -12,8 +12,8 @@ const rarityColors = ["#78909C", "#66BB6A", "#42A5F5", "#AB47BC", "#FFA726"];
 export const CardWrapper = styled(Box)<CardWrapperProps>`
   position: relative;
 
-  opacity: ${({ drops }) => (drops ? 1 : 0.5)};
-  cursor: ${({ drops }) => (drops ? "default" : "not-allowed")};
+  opacity: ${({ $drops }) => ($drops ? 1 : 0.5)};
+  cursor: ${({ $drops }) => ($drops ? "default" : "not-allowed")};
 
   overflow: hidden;
 

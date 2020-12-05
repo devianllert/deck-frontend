@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { GetServerSideProps, NextPage } from "next";
-import { useMutation, useQuery } from "react-query";
+import { useMutation, useQuery, QueryCache } from "react-query";
+import { dehydrate } from "react-query/hydration";
 
 import Container from "@material-ui/core/Container";
 import Typography from "@material-ui/core/Typography";
@@ -58,10 +59,6 @@ const Home: NextPage<{ userID: string }> = (props) => {
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [openCardModal, setOpenCardModal] = useState(false);
 
-  useEffect(() => {
-    setSearchCards(userID ? myCards : allCards);
-  }, [myCards, allCards]);
-
   const filterCards = (): void => {
     const currentCards = isMy ? myCards : allCards;
 
@@ -103,8 +100,6 @@ const Home: NextPage<{ userID: string }> = (props) => {
   useEffect(() => {
     filterCards();
   }, [searchCardsInput, isMy]);
-
-  if (allCardsLoading || myCardsLoading) return null;
 
   return (
     <Container maxWidth="md">
@@ -228,12 +223,19 @@ const Home: NextPage<{ userID: string }> = (props) => {
 };
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const queryCache = new QueryCache();
+
   const userID = getCookie(ctx.req.headers.cookie, "userId");
 
-  // TODO: Prefetch cards with react-query
+  await queryCache.prefetchQuery("cards-all", fetchAllCards);
+
+  if (userID) {
+    await queryCache.prefetchQuery("cards-my", () => fetchUserCards(userID));
+  }
 
   return {
     props: {
+      dehydratedState: dehydrate(queryCache),
       userID,
     },
   };
